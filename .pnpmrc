@@ -1,0 +1,8 @@
+# pnpm-only options (kept here so npm doesn't warn)
+
+shamefully-hoist=true
+strict-peer-dependencies=false
+
+# to get the latest compatible packages when creating the project https://github.com/pnpm/pnpm/issues/6463
+
+resolution-mode=highest
