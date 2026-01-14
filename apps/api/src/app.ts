@@ -43,6 +43,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(apiErrorHandler);
   await app.register(socketPlugin);
 
+  app.get('/', async () => ({ ok: true, data: { service: 'kanby-api' } }));
   app.get('/health', async () => ({ ok: true, data: { status: 'ok' } }));
 
   await app.register(boardsRoutes);
