@@ -5,6 +5,7 @@ import { ok } from '../lib/http.js';
 import { positionsForIds, insertAt, removeOne } from '../lib/positions.js';
 import { requireBoardMember } from '../services/authz.js';
 import { createActivityEvent } from '../services/activity.js';
+import { emitActivity } from '../realtime.js';
 
 const ParamsBoardId = z.object({ boardId: z.string().min(1) });
 const ParamsBoardList = z.object({ boardId: z.string().min(1), listId: z.string().min(1) });
@@ -52,6 +53,7 @@ export async function listsRoutes(app: FastifyInstance) {
       return { list, event };
     });
 
+    emitActivity(app.io, result.event, { list: result.list });
     return ok({ list: result.list, activityEvent: result.event });
   });
 
@@ -86,6 +88,7 @@ export async function listsRoutes(app: FastifyInstance) {
       return { list, event };
     });
 
+    emitActivity(app.io, result.event, { list: result.list });
     return ok({ list: result.list, activityEvent: result.event });
   });
 
@@ -118,6 +121,7 @@ export async function listsRoutes(app: FastifyInstance) {
       return { deletedListId: listId, event };
     });
 
+    emitActivity(app.io, result.event, { deletedListId: result.deletedListId });
     return ok({ deletedListId: result.deletedListId, activityEvent: result.event });
   });
 
@@ -153,6 +157,7 @@ export async function listsRoutes(app: FastifyInstance) {
       return { listIds: body.listIds, event };
     });
 
+    emitActivity(app.io, result.event, { listIds: result.listIds });
     return ok({ listIds: result.listIds, activityEvent: result.event });
   });
 }

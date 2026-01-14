@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BoardCreateSchema } from '@kanby/shared';
 import { ok } from '../lib/http.js';
 import { createActivityEvent } from '../services/activity.js';
+import { emitActivity } from '../realtime.js';
 
 const ParamsBoardId = z.object({ boardId: z.string().min(1) });
 
@@ -39,10 +40,10 @@ export async function boardsRoutes(app: FastifyInstance) {
       return { board, event };
     });
 
-    return ok({
-      board: { ...result.board, createdAt: result.board.createdAt.toISOString() },
-      activityEvent: result.event,
-    });
+    const boardDto = { ...result.board, createdAt: result.board.createdAt.toISOString() };
+    emitActivity(app.io, result.event, { board: boardDto });
+
+    return ok({ board: boardDto, activityEvent: result.event });
   });
 
   app.get('/boards/:boardId', async (req) => {

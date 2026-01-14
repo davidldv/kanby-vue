@@ -1,11 +1,16 @@
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 const POS_STEP = 1000;
 
-const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? 'file:./dev.db',
-});
+const connectionString =
+  process.env.MIGRATE_DATABASE_URL ?? process.env.RUNTIME_DATABASE_URL ?? process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error('Missing MIGRATE_DATABASE_URL (or RUNTIME_DATABASE_URL)');
+}
+
+const adapter = new PrismaPg({ connectionString });
 
 const prisma = new PrismaClient({ adapter });
 

@@ -5,6 +5,7 @@ import { ok } from '../lib/http.js';
 import { POS_STEP, insertAt, positionsForIds, removeOne } from '../lib/positions.js';
 import { requireBoardMember } from '../services/authz.js';
 import { createActivityEvent } from '../services/activity.js';
+import { emitActivity } from '../realtime.js';
 
 const ParamsListId = z.object({ listId: z.string().min(1) });
 const ParamsCardId = z.object({ cardId: z.string().min(1) });
@@ -66,6 +67,7 @@ export async function cardsRoutes(app: FastifyInstance) {
       return { card, event };
     });
 
+    emitActivity(app.io, result.event, { card: result.card });
     return ok({ card: result.card, activityEvent: result.event });
   });
 
@@ -107,6 +109,7 @@ export async function cardsRoutes(app: FastifyInstance) {
       return { card, event };
     });
 
+    emitActivity(app.io, result.event, { card: result.card });
     return ok({ card: result.card, activityEvent: result.event });
   });
 
@@ -139,6 +142,7 @@ export async function cardsRoutes(app: FastifyInstance) {
       return { deletedCardId: cardId, event };
     });
 
+    emitActivity(app.io, result.event, { deletedCardId: result.deletedCardId });
     return ok({ deletedCardId: result.deletedCardId, activityEvent: result.event });
   });
 
@@ -240,6 +244,7 @@ export async function cardsRoutes(app: FastifyInstance) {
       return { card: after, event };
     });
 
+    emitActivity(app.io, result.event, { card: result.card });
     return ok({ card: result.card, activityEvent: result.event });
   });
 }

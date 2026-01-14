@@ -10,6 +10,7 @@ import {
   markEventUndone,
 } from '../services/activity.js';
 import { insertAt, positionsForIds, removeOne } from '../lib/positions.js';
+import { boardRoom, emitActivity } from '../realtime.js';
 
 const ParamsBoardId = z.object({ boardId: z.string().min(1) });
 const ParamsEventId = z.object({ eventId: z.string().min(1) });
@@ -268,6 +269,8 @@ export async function activityRoutes(app: FastifyInstance) {
       return;
     }
 
+    emitActivity(app.io, result.undoEvent, { undoneEventId: eventId });
+
     return ok({ activityEvent: result.undoEvent });
   });
 
@@ -276,6 +279,8 @@ export async function activityRoutes(app: FastifyInstance) {
     await requireBoardMember(app.prisma, boardId, req.userId);
 
     await app.prisma.activityEvent.deleteMany({ where: { boardId } });
+
+    app.io.to(boardRoom(boardId)).emit('board:activity_cleared', { boardId });
 
     return ok({ cleared: true });
   });

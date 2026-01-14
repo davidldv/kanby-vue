@@ -5,6 +5,7 @@ import sensible from '@fastify/sensible';
 import { prismaPlugin } from './plugins/prisma.js';
 import { authPlugin } from './plugins/auth.js';
 import { apiErrorHandler } from './plugins/error-handler.js';
+import { socketPlugin } from './plugins/socket.js';
 
 import { boardsRoutes } from './routes/boards.js';
 import { listsRoutes } from './routes/lists.js';
@@ -26,12 +27,21 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   app.decorate('config', { port, corsOrigin });
 
-  await app.register(cors, { origin: corsOrigin, credentials: true });
+  await app.register(cors, {
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true);
+      if (origin === corsOrigin) return cb(null, true);
+      if (/^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return cb(null, true);
+      return cb(new Error('CORS origin not allowed'), false);
+    },
+    credentials: true,
+  });
   await app.register(sensible);
 
   await app.register(prismaPlugin);
   await app.register(authPlugin);
   await app.register(apiErrorHandler);
+  await app.register(socketPlugin);
 
   app.get('/health', async () => ({ ok: true, data: { status: 'ok' } }));
 
