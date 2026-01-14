@@ -42,20 +42,54 @@ function findAncestorDirContainingPackage(startDir, packagePathParts) {
 }
 
 function ensureInstalled({ baseDir, hostPkgName, nativePkgName, envFlag }) {
-  const hostPkgJsonPath = path.join(baseDir, 'node_modules', ...hostPkgName.split('/'), 'package.json');
+  const hostPkgJsonPath = path.join(
+    baseDir,
+    'node_modules',
+    ...hostPkgName.split('/'),
+    'package.json',
+  );
   if (!fileExists(hostPkgJsonPath)) return;
 
   const hostVersion = readJson(hostPkgJsonPath)?.version;
   if (!hostVersion) return;
 
-  const nativePkgJsonPath = path.join(baseDir, 'node_modules', ...nativePkgName.split('/'), 'package.json');
+  const nativePkgJsonPath = path.join(
+    baseDir,
+    'node_modules',
+    ...nativePkgName.split('/'),
+    'package.json',
+  );
   if (fileExists(nativePkgJsonPath)) return;
 
-  execSync(`npm install --no-save --ignore-scripts ${nativePkgName}@${hostVersion}`, {
-    stdio: 'inherit',
-    cwd: baseDir,
-    env: { ...process.env, [envFlag]: '1' },
-  });
+  // IMPORTANT: When running as a workspace lifecycle script, npm sets several env vars
+  // (like npm_config_local_prefix) pointing at the workspace directory (apps/web).
+  // Even if cwd is changed, a nested `npm install` can still end up installing into
+  // the workspace folder, which won't satisfy hoisted deps (e.g. /node_modules/rollup).
+  // Force installation into the hoisted node_modules using --prefix and workspaces=false.
+  console.log(`[native-fix] Installing ${nativePkgName}@${hostVersion} in ${baseDir}`);
+
+  execSync(
+    `npm --prefix "${baseDir}" --workspaces=false install --no-save --ignore-scripts ${nativePkgName}@${hostVersion}`,
+    {
+      stdio: 'inherit',
+      cwd: baseDir,
+      env: {
+        ...process.env,
+        [envFlag]: '1',
+        npm_config_prefix: baseDir,
+        npm_config_local_prefix: baseDir,
+        npm_config_workspaces: 'false',
+        npm_config_audit: 'false',
+        npm_config_fund: 'false',
+      },
+    },
+  );
+
+  if (!fileExists(nativePkgJsonPath)) {
+    throw new Error(
+      `[native-fix] Expected ${nativePkgName} to be installed at ${nativePkgJsonPath}, but it was not found.`,
+    );
+  }
 }
 
 function main() {
