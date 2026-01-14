@@ -7,7 +7,7 @@
     "predev": "npm run build -w @kanby/shared",
     "dev": "tsx src/index.ts",
     "dev:watch": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run prisma:generate && tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
