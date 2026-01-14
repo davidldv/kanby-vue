@@ -299,19 +299,25 @@ async function onCardsDragEnd(evt: unknown, listId: string) {
     newIndex?: number | null;
     item?: Element;
     to?: HTMLElement;
+    from?: HTMLElement;
   };
 
   if (e.oldIndex == null || e.newIndex == null) return;
 
-  const cardId = e.item?.getAttribute('data-card-id');
+  const cardId =
+    e.item?.getAttribute('data-card-id') ?? (e.item as HTMLElement | undefined)?.dataset?.cardId;
   const toListId = e.to?.dataset?.listId ?? listId;
   if (!cardId || !toListId) return;
+
+  // When dragging across lists, Sortable can emit events that reach multiple handlers.
+  // Only act when this handler corresponds to the destination list.
+  if (listId !== toListId) return;
 
   try {
     await boardStore.moveCard(cardId, toListId, e.newIndex);
   } catch (err: unknown) {
     $q.notify({ type: 'negative', message: errorMessage(err, 'Move failed') });
-    await boardStore.refresh();
+    // boardStore.moveCard rolls back locally on failure.
   }
 }
 

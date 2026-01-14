@@ -13,6 +13,7 @@ export const useRealtimeStore = defineStore('realtime', {
     socket: null as Socket | null,
     connected: false,
     currentBoardId: null as string | null,
+    refreshTimer: null as number | null,
   }),
   actions: {
     connect() {
@@ -44,8 +45,15 @@ export const useRealtimeStore = defineStore('realtime', {
               activity.prepend(msg.activityEvent);
             }
             if (board.boardId === msg.activityEvent.boardId) {
-              // Keep it simple and correct: refresh.
-              void board.refresh();
+              // Avoid a "reload" feel during drag/drop:
+              // - skip refresh for your own events (local UI already updated)
+              // - debounce refresh to coalesce bursts of activity
+              if (msg.activityEvent.actorUserId === getUserId()) return;
+              if (this.refreshTimer != null) return;
+              this.refreshTimer = window.setTimeout(() => {
+                this.refreshTimer = null;
+                void board.refresh();
+              }, 250);
             }
           });
         },
@@ -70,6 +78,10 @@ export const useRealtimeStore = defineStore('realtime', {
       this.socket = null;
       this.connected = false;
       this.currentBoardId = null;
+      if (this.refreshTimer != null) {
+        window.clearTimeout(this.refreshTimer);
+        this.refreshTimer = null;
+      }
     },
 
     joinBoard(boardId: string) {
