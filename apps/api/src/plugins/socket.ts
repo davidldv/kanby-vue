@@ -2,6 +2,7 @@ import fp from 'fastify-plugin';
 import type { FastifyInstance } from 'fastify';
 import { Server } from 'socket.io';
 import { boardRoom } from '../realtime.js';
+import { createSocketIoCorsOrigin } from '../lib/cors.js';
 
 function headerToString(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
@@ -18,7 +19,7 @@ export const socketPlugin = fp(async (app: FastifyInstance) => {
   const corsOrigin = app.config?.corsOrigin ?? process.env.CORS_ORIGIN ?? 'http://localhost:9000';
 
   const io = new Server(app.server, {
-    cors: { origin: corsOrigin, credentials: true },
+    cors: { origin: createSocketIoCorsOrigin(corsOrigin), credentials: true },
   });
 
   app.decorate('io', io);

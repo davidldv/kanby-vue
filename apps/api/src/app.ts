@@ -11,6 +11,7 @@ import { boardsRoutes } from './routes/boards.js';
 import { listsRoutes } from './routes/lists.js';
 import { cardsRoutes } from './routes/cards.js';
 import { activityRoutes } from './routes/activity.js';
+import { createFastifyCorsOrigin } from './lib/cors.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const port = Number(process.env.PORT ?? 4000);
@@ -28,12 +29,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.decorate('config', { port, corsOrigin });
 
   await app.register(cors, {
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (origin === corsOrigin) return cb(null, true);
-      if (/^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) return cb(null, true);
-      return cb(new Error('CORS origin not allowed'), false);
-    },
+    origin: createFastifyCorsOrigin(corsOrigin),
     credentials: true,
   });
   await app.register(sensible);

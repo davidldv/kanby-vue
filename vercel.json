@@ -3,6 +3,11 @@
   "buildCommand": "npm --prefix apps/web run build",
   "outputDirectory": "apps/web/dist/spa",
   "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://kanby-vue-api.onrender.com/$1" },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://kanby-vue-api.onrender.com/socket.io/$1"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

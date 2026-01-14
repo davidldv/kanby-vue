@@ -3,7 +3,15 @@ import { getUserId } from './user';
 
 function baseUrl(): string {
   const url = import.meta.env.VITE_API_URL as string | undefined;
-  return (url && url.trim().length ? url : 'http://localhost:4000').replace(/\/$/, '');
+  const cleaned = (url && url.trim().length ? url.trim() : undefined)?.replace(/\/$/, '');
+  if (cleaned) return cleaned;
+
+  // In production deployments, prefer same-origin proxy routes (see `vercel.json`).
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    return `${window.location.origin}/api`;
+  }
+
+  return 'http://localhost:4000';
 }
 
 export class ApiError extends Error {
