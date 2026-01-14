@@ -18,6 +18,9 @@ export default {
         'last 4 iOS versions',
       ],
     }),
+    {
+      "@tailwindcss/postcss": {},
+    }
 
     // https://github.com/elchininet/postcss-rtlcss
     // If you want to support RTL css, then

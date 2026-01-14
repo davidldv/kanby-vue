@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id   String @id
+  name String
+
+  boardMemberships BoardMember[]
+  activityEvents   ActivityEvent[] @relation("ActorEvents")
+  cardAssignments  CardAssignee[]
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+
+  members  BoardMember[]
+  lists    List[]
+  labels   Label[]
+  activity ActivityEvent[]
+}
+
+model BoardMember {
+  boardId String
+  userId  String
+  role    String
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId])
+}
+
+model List {
+  id       String @id @default(cuid())
+  boardId  String
+  title    String
+  position Int
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@index([boardId, position])
+}
+
+model Card {
+  id          String  @id @default(cuid())
+  listId      String
+  title       String
+  description String?
+  position    Int
+
+  list List @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  labels    CardLabel[]
+  assignees CardAssignee[]
+
+  @@index([listId, position])
+}
+
+model Label {
+  id      String @id @default(cuid())
+  boardId String
+  name    String
+  color   String
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  cards CardLabel[]
+
+  @@unique([boardId, name])
+}
+
+model CardLabel {
+  cardId  String
+  labelId String
+
+  card  Card  @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, labelId])
+}
+
+model CardAssignee {
+  cardId String
+  userId String
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, userId])
+}
+
+model ActivityEvent {
+  id          String            @id @default(cuid())
+  boardId     String
+  actorUserId String
+  type        String
+  payloadJson String
+  createdAt   DateTime          @default(now())
+  undoneAt    DateTime?
+
+  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  actor User  @relation("ActorEvents", fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([boardId, createdAt])
+}

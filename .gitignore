@@ -31,3 +31,6 @@ yarn-error.log*
 
 # local .env files
 .env.local*
+
+# Prisma 7 generated client
+/apps/api/src/generated/prisma
