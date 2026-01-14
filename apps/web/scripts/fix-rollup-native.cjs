@@ -7,6 +7,7 @@
   - sass-embedded (missing sass-embedded-linux-x64), which then causes the
     "sass --embedded is unavailable in pure JS mode" crash during Quasar/Vite.
   - Lightning CSS (missing lightningcss-linux-x64-gnu), which can break Vite/PostCSS.
+  - Tailwind Oxide (missing @tailwindcss/oxide-linux-x64-gnu), which can break Vite/PostCSS.
 
   This script runs before `quasar prepare` and ensures the needed native packages
   are present on Linux. It is a no-op on non-Linux platforms.
@@ -130,6 +131,16 @@ function main() {
       baseDir: lightningCssBaseDir,
       hostPkgName: 'lightningcss',
       nativePkgName: 'lightningcss-linux-x64-gnu',
+      envFlag: 'KANBY_NATIVE_DEPS_FIXED',
+    });
+  }
+
+  const tailwindOxideBaseDir = findAncestorDirContainingPackage(process.cwd(), ['@tailwindcss', 'oxide']);
+  if (tailwindOxideBaseDir) {
+    ensureInstalled({
+      baseDir: tailwindOxideBaseDir,
+      hostPkgName: '@tailwindcss/oxide',
+      nativePkgName: '@tailwindcss/oxide-linux-x64-gnu',
       envFlag: 'KANBY_NATIVE_DEPS_FIXED',
     });
   }
