@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ActivityEventDto, ActivityEventType } from '@kanby/shared';
 import { safeJsonParse, safeJsonStringify } from '../lib/json.js';
 
