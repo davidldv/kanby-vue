@@ -23,6 +23,19 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function findAncestorDirContainingRollup(startDir) {
+  let currentDir = startDir;
+  // Walk up until filesystem root.
+  while (true) {
+    const rollupPkgJsonPath = path.join(currentDir, 'node_modules', 'rollup', 'package.json');
+    if (fileExists(rollupPkgJsonPath)) return currentDir;
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) return null;
+    currentDir = parentDir;
+  }
+}
+
 function main() {
   if (process.platform !== 'linux') return;
 
@@ -32,19 +45,23 @@ function main() {
   // Only needed for x64 glibc environments (Vercel's default Linux runtime).
   if (process.arch !== 'x64') return;
 
-  const rollupPkgJsonPath = path.join(process.cwd(), 'node_modules', 'rollup', 'package.json');
-  if (!fileExists(rollupPkgJsonPath)) return;
+  // With npm workspaces, dependencies like rollup are usually hoisted to the repo root.
+  // This script runs from apps/web, so we search upward for the actual node_modules.
+  const baseDir = findAncestorDirContainingRollup(process.cwd());
+  if (!baseDir) return;
 
-  const rollupVersion = readJson(rollupPkgJsonPath).version;
+  const rollupPkgJsonPath = path.join(baseDir, 'node_modules', 'rollup', 'package.json');
+  const rollupVersion = readJson(rollupPkgJsonPath)?.version;
   if (!rollupVersion) return;
 
   const nativePkgName = '@rollup/rollup-linux-x64-gnu';
-  const nativePkgJsonPath = path.join(process.cwd(), 'node_modules', nativePkgName, 'package.json');
+  const nativePkgJsonPath = path.join(baseDir, 'node_modules', nativePkgName, 'package.json');
 
   if (fileExists(nativePkgJsonPath)) return;
 
   execSync(`npm install --no-save --ignore-scripts ${nativePkgName}@${rollupVersion}`, {
     stdio: 'inherit',
+    cwd: baseDir,
     env: { ...process.env, KANBY_ROLLUP_NATIVE_FIXED: '1' },
   });
 }
