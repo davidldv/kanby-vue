@@ -33,12 +33,16 @@ export async function apiFetch<T>(
     signal?: AbortSignal;
   },
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    'X-User-Id': getUserId(),
+  };
+  if (options?.body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const init: RequestInit = {
     method: options?.method ?? 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': getUserId(),
-    },
+    headers,
   };
 
   if (options?.body !== undefined) {

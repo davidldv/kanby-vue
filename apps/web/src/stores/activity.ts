@@ -79,10 +79,21 @@ export const useActivityStore = defineStore('activity', {
     },
 
     async clearServer(boardId: string) {
-      await apiFetch<{ cleared: true }>(`/boards/${boardId}/activity/clear`, { method: 'POST' });
+      // Optimistically clear local state so the UI responds immediately.
       if (this.boardId === boardId) {
         this.events = [];
         this.nextCursor = null;
+        this.error = null;
+      }
+
+      this.loading = true;
+      try {
+        await apiFetch<{ cleared: true }>(`/boards/${boardId}/activity/clear`, { method: 'POST' });
+      } catch (e: unknown) {
+        this.error = errorMessage(e, 'Failed to clear activity');
+        throw e;
+      } finally {
+        this.loading = false;
       }
     },
   },
